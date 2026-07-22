@@ -496,7 +496,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// DELETE - Delete a seller GD entry (admin or own seller)
+// DELETE - Delete seller GD entry or seller QR code (admin only)
 export async function DELETE(request: NextRequest) {
   try {
     const currentUser = await getAuthUser();
@@ -504,22 +504,40 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Login required" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { entryId } = body as { entryId: number };
-
-    if (!entryId) {
-      return NextResponse.json({ error: "entryId required" }, { status: 400 });
-    }
-
     // Only admin can delete
     if (currentUser.role !== "admin") {
       return NextResponse.json({ error: "Admin access only" }, { status: 403 });
     }
-    await pool.query("DELETE FROM seller_gd_details WHERE id = $1", [entryId]);
 
-    // No summary recalc needed - admin delete is rare
+    const body = await request.json();
+    const { entryId, qrId, qrIds } = body as { entryId?: number; qrId?: number; qrIds?: number[] };
 
-    return NextResponse.json({ success: true, message: "Entry deleted" });
+    // Delete GD detail entry
+    if (entryId) {
+      await pool.query("DELETE FROM seller_gd_details WHERE id = $1", [entryId]);
+      return NextResponse.json({ success: true, message: "Entry deleted" });
+    }
+
+    // Delete single seller QR code
+    if (qrId) {
+      await pool.query("DELETE FROM seller_qr_codes WHERE id = $1", [qrId]);
+      // Also delete from main qr_codes table if exists
+      const sellerQr = await pool.query("SELECT fleek_id FROM seller_qr_codes WHERE id = $1", [qrId]);
+      if (sellerQr.rows.length > 0) {
+        await pool.query("DELETE FROM qr_codes WHERE fleek_id = $1 AND source = 'seller'", [sellerQr.rows[0].fleek_id]);
+      }
+      return NextResponse.json({ success: true, message: "QR code deleted" });
+    }
+
+    // Bulk delete seller QR codes
+    if (qrIds && qrIds.length > 0) {
+      for (const id of qrIds) {
+        await pool.query("DELETE FROM seller_qr_codes WHERE id = $1", [id]);
+      }
+      return NextResponse.json({ success: true, message: `${qrIds.length} QR codes deleted` });
+    }
+
+    return NextResponse.json({ error: "entryId, qrId, or qrIds required" }, { status: 400 });
   } catch (error) {
     console.error("Delete seller entry error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

@@ -739,7 +739,7 @@ export default function Home() {
   const [sellerVendor, setSellerVendor] = useState("");
   const [sellerUploading, setSellerUploading] = useState(false);
   const [sellerResult, setSellerResult] = useState<{ totalOrders: number; totalBoxes: number; date: string; vendor: string } | null>(null);
-  const [sellerQrCodes, setSellerQrCodes] = useState<{ fleekId: string; qrImageData: string }[]>([]);
+  const [sellerQrCodes, setSellerQrCodes] = useState<{ id?: number; fleekId: string; qrImageData: string }[]>([]);
   const [sellerQrSel, setSellerQrSel] = useState<Set<number>>(new Set());
   const [sellerHistory, setSellerHistory] = useState<{ id: number; vendor: string; uploadDate: string; totalOrders: number; totalBoxes: number; createdAt?: string }[]>([]);
   const [sellerDetails, setSellerDetails] = useState<{ id: number; fleekId: string; boxNo: string; pieces: string | null; weight: string | null; height?: string | null; length?: string | null; width?: string | null; dimensionalWeight?: string | null; createdAt?: string; uploadDate?: string; vendor?: string; sellerName?: string }[]>([]);
@@ -2604,7 +2604,7 @@ ${Array.from({ length: totalPages }, (_, pageIdx) => {
               </div>
               <div className="flex gap-2 flex-wrap">
                 {sellerQrSel.size > 0 && <button onClick={printSellerQRs} className="btn-primary px-4 py-2 rounded-xl text-xs flex items-center gap-1.5"><span>🖨️ Print ({sellerQrSel.size})</span></button>}
-                {sellerQrSel.size > 0 && ["admin", "manager"].includes(user.role) && <button onClick={() => { if (confirm(`Delete ${sellerQrSel.size} selected QR code(s)?`)) { setSellerQrCodes(prev => prev.filter((_, i) => !sellerQrSel.has(i))); setSellerQrSel(new Set()); toast("QR codes removed", "success"); }}} className="bg-red-500/20 text-red-400 hover:bg-red-500/30 px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-all"><span>🗑️ Delete ({sellerQrSel.size})</span></button>}
+                {sellerQrSel.size > 0 && ["admin", "manager"].includes(user.role) && <button onClick={async () => { if (!confirm(`Delete ${sellerQrSel.size} selected QR code(s)?`)) return; const ids = Array.from(sellerQrSel).map(i => (sellerQrCodes[i] as { id?: number })?.id).filter(Boolean); if (ids.length > 0) { await authFetch("/api/seller", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ qrIds: ids }) }); } setSellerQrSel(new Set()); toast(`${ids.length} QR codes deleted`, "success"); loadSellerData(); }} className="bg-red-500/20 text-red-400 hover:bg-red-500/30 px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-all"><span>🗑️ Delete ({sellerQrSel.size})</span></button>}
                 {sellerQrCodes.length > 0 && <button onClick={() => setSellerQrSel(sellerQrSel.size === sellerQrCodes.length ? new Set() : new Set(sellerQrCodes.map((_, i) => i)))} className="btn-ghost px-3 py-2 rounded-xl text-xs">{sellerQrSel.size === sellerQrCodes.length ? "Deselect All" : "Select All"}</button>}
                 {sellerQrCodes.length > 0 && <button onClick={dlAllSellerQr} className="btn-ghost px-3 py-2 rounded-xl text-xs"><span>⬇ Download All</span></button>}
               </div>
@@ -3069,15 +3069,10 @@ ${Array.from({ length: totalPages }, (_, pageIdx) => {
             return true;
           });
           return (<>
-          {/* Search + Date Filter */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex gap-2 flex-1">
-              <input type="text" value={logSearch} onChange={(e) => setLogSearch(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") getLogs(); }} placeholder="Search order ID..." className="input-field flex-1 px-3 py-2.5 rounded-xl text-xs" />
-              <button onClick={getLogs} disabled={loadLogs} className="btn-ghost px-3 py-2.5 rounded-xl text-xs shrink-0">{loadLogs ? <Spinner size={14} /> : <Icon name="search" size={14} />}</button>
-            </div>
-            <div className="w-full sm:w-64">
-              <DateRangePicker from={plHistFrom} to={plHistTo} onFromChange={setPlHistFrom} onToChange={setPlHistTo} />
-            </div>
+          {/* Search */}
+          <div className="flex gap-2">
+            <input type="text" value={logSearch} onChange={(e) => setLogSearch(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") getLogs(); }} placeholder="Search order ID..." className="input-field flex-1 px-3 py-2.5 rounded-xl text-xs" />
+            <button onClick={getLogs} disabled={loadLogs} className="btn-ghost px-3 py-2.5 rounded-xl text-xs shrink-0">{loadLogs ? <Spinner size={14} /> : <Icon name="search" size={14} />}</button>
           </div>
 
           {filteredLogs.length === 0 ? (
@@ -3726,7 +3721,7 @@ ${Array.from({ length: totalPages }, (_, pageIdx) => {
                   <button onClick={printSelectedQRs} className="btn-primary px-4 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5"><span>🖨️ Print ({qrSelections.size})</span></button>
                 )}
                 {qrSelections.size > 0 && isAdmin && (
-                  <button onClick={async () => { if (!confirm(`Delete ${qrSelections.size} selected QR code(s)?`)) return; const ids = Array.from(qrSelections).map(i => savedQr[i]?.id).filter(Boolean); for (const id of ids) { await authFetch("/api/qr-codes", { method: "DELETE", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ id }) }); } setQrSelections(new Set()); toast(`${ids.length} QR codes deleted`, "success"); getSaved(); }} className="bg-red-500/20 text-red-400 hover:bg-red-500/30 px-4 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-all"><span>🗑️ Delete ({qrSelections.size})</span></button>
+                  <button onClick={async () => { if (!confirm(`Delete ${qrSelections.size} selected QR code(s)?`)) return; const ids = Array.from(qrSelections).map(i => savedQr[i]?.id).filter(Boolean); for (const qrId of ids) { await authFetch("/api/qr-codes", { method: "DELETE", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ qrId }) }); } setQrSelections(new Set()); toast(`${ids.length} QR codes deleted`, "success"); getSaved(); }} className="bg-red-500/20 text-red-400 hover:bg-red-500/30 px-4 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-all"><span>🗑️ Delete ({qrSelections.size})</span></button>
                 )}
                 <button onClick={() => setQrSelections(qrSelections.size === savedQr.length ? new Set() : new Set(savedQr.map((_, i) => i)))} className="btn-ghost px-3 py-2 rounded-xl text-xs">
                   {qrSelections.size === savedQr.length ? "Deselect All" : "Select All"}
@@ -4182,12 +4177,9 @@ ${Array.from({ length: totalPages }, (_, pageIdx) => {
               </div>
             </div>
 
-            {/* Filters */}
+            {/* Filters - just dropdowns, no duplicate calendar */}
             <div className="card-static p-4 mb-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
-                <div>
-                  <DateRangePicker label="📅 Date" from={plFilterDate} to={plFilterDate} onFromChange={v => { setPlFilterDate(v); load3plOrders(v); }} onToChange={v => { setPlFilterDate(v); load3plOrders(v); }} />
-                </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 items-end">
                 <ThemedSelect value={plFilter3pl} onChange={(v) => { setPlFilter3pl(v); load3plOrders(undefined, v); }} label="3PL" options={[{ value: "all", label: "All 3PLs" }, { value: "3pl_ecl", label: "ECL" }, { value: "3pl_ge", label: "GE" }, { value: "unassigned", label: "Unassigned" }]} />
                 <ThemedSelect value={plFilterVendor} onChange={(v) => { setPlFilterVendor(v); load3plOrders(undefined, undefined, v); }} label="Vendor" options={[{ value: "all", label: "All Vendors" }, ...plFilterVendors.map(v => ({ value: v, label: v }))]} />
                 <button onClick={() => load3plOrders()} className="btn-primary py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5">
