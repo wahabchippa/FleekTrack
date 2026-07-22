@@ -2331,20 +2331,24 @@ ${Array.from({ length: totalPages }, (_, pageIdx) => {
           ))}
         </nav>
         
-        {/* Compact filter row */}
-        <div className="flex items-center gap-2 mt-3 flex-wrap">
-          {["admin", "manager"].includes(user.role) && <span className="text-purple-400 text-[10px] font-bold bg-purple-500/10 px-2 py-0.5 rounded shrink-0">👑 ALL SELLERS</span>}
-          <div className="flex items-center gap-1.5 flex-1 min-w-0 flex-wrap">
-            <input type="date" value={adminSellerDateFrom} onChange={e => { setAdminSellerDateFrom(e.target.value); if (e.target.value > adminSellerDateTo) setAdminSellerDateTo(e.target.value); }} className="input-field px-2 py-1.5 rounded-lg text-[11px] w-[120px]" />
-            <span className="text-zinc-600 text-[10px]">→</span>
-            <input type="date" value={adminSellerDateTo} onChange={e => setAdminSellerDateTo(e.target.value)} className="input-field px-2 py-1.5 rounded-lg text-[11px] w-[120px]" />
+        {/* Filter bar */}
+        <div className="card-static p-3 mt-3">
+          <div className="flex items-center gap-2 mb-2">
+            {["admin", "manager"].includes(user.role) 
+              ? <span className="text-purple-400 text-[10px] font-bold bg-purple-500/10 px-2 py-0.5 rounded">👑 ALL SELLERS</span>
+              : <span className="text-purple-400 text-[10px] font-bold bg-purple-500/10 px-2 py-0.5 rounded">📊 MY DATA</span>
+            }
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 items-end">
+            <div className="sm:col-span-2">
+              <DateRangePicker label="📅 Date Range" from={adminSellerDateFrom} to={adminSellerDateTo} onFromChange={(v) => { setAdminSellerDateFrom(v); if (v > adminSellerDateTo) setAdminSellerDateTo(v); }} onToChange={setAdminSellerDateTo} />
+            </div>
             {["admin", "manager"].includes(user.role) && (
-              <select value={adminSellerVendorFilter} onChange={e => setAdminSellerVendorFilter(e.target.value)} className="input-field px-2 py-1.5 rounded-lg text-[11px] w-[130px]">
-                <option value="all">All Sellers</option>
-                {adminSellerVendors.map(v => <option key={v} value={v}>{v}</option>)}
-              </select>
+              <ThemedSelect value={adminSellerVendorFilter} onChange={setAdminSellerVendorFilter} label="Seller" options={[{ value: "all", label: "All Sellers" }, ...adminSellerVendors.map(v => ({ value: v, label: v }))]} />
             )}
-            <button onClick={() => loadSellerData()} className="bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all shrink-0">Load</button>
+            <button onClick={() => loadSellerData()} className="btn-primary py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
+              <Icon name="refresh" size={14} /> Load
+            </button>
           </div>
         </div>
       </div>
@@ -2710,29 +2714,25 @@ ${Array.from({ length: totalPages }, (_, pageIdx) => {
           ))}
         </nav>
         
-        {/* Compact filter row */}
-        <div className="flex items-center gap-2 mt-3 flex-wrap">
-          {["admin", "manager"].includes(user.role) 
-            ? <span className="text-emerald-400 text-[10px] font-bold bg-emerald-500/10 px-2 py-0.5 rounded shrink-0">👑 ECL + GE</span>
-            : <span className="text-emerald-400 text-[10px] font-bold bg-emerald-500/10 px-2 py-0.5 rounded shrink-0">📊 ALL DATA</span>
-          }
-          <div className="flex items-center gap-1.5 flex-1 min-w-0 flex-wrap">
-            <input type="date" value={admin3plDateFrom} onChange={e => { setAdmin3plDateFrom(e.target.value); if (e.target.value > admin3plDateTo) setAdmin3plDateTo(e.target.value); }} className="input-field px-2 py-1.5 rounded-lg text-[11px] w-[120px]" />
-            <span className="text-zinc-600 text-[10px]">→</span>
-            <input type="date" value={admin3plDateTo} onChange={e => setAdmin3plDateTo(e.target.value)} className="input-field px-2 py-1.5 rounded-lg text-[11px] w-[120px]" />
+        {/* Filter bar */}
+        <div className="card-static p-3 mt-3">
+          <div className="flex items-center gap-2 mb-2">
+            {["admin", "manager"].includes(user.role) 
+              ? <span className="text-emerald-400 text-[10px] font-bold bg-emerald-500/10 px-2 py-0.5 rounded">👑 ECL + GE</span>
+              : <span className="text-emerald-400 text-[10px] font-bold bg-emerald-500/10 px-2 py-0.5 rounded">📊 MY DATA</span>
+            }
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 items-end">
+            <div className="sm:col-span-2">
+              <DateRangePicker label="📅 Date Range" from={admin3plDateFrom} to={admin3plDateTo} onFromChange={(v) => { setAdmin3plDateFrom(v); if (v > admin3plDateTo) setAdmin3plDateTo(v); }} onToChange={setAdmin3plDateTo} />
+            </div>
             {["admin", "manager"].includes(user.role) && (
-              <select value={admin3plFilter} onChange={e => setAdmin3plFilter(e.target.value)} className="input-field px-2 py-1.5 rounded-lg text-[11px] w-[100px]">
-                <option value="all">All 3PLs</option>
-                <option value="3pl_ecl">ECL</option>
-                <option value="3pl_ge">GE</option>
-                <option value="unassigned">Unassigned</option>
-              </select>
+              <ThemedSelect value={admin3plFilter} onChange={setAdmin3plFilter} label="3PL" options={[{ value: "all", label: "All 3PLs" }, { value: "3pl_ecl", label: "ECL" }, { value: "3pl_ge", label: "GE" }, { value: "unassigned", label: "Unassigned" }]} />
             )}
-            <select value={admin3plVendorFilter} onChange={e => setAdmin3plVendorFilter(e.target.value)} className="input-field px-2 py-1.5 rounded-lg text-[11px] w-[120px]">
-              <option value="all">All Vendors</option>
-              {admin3plVendors.map(v => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <button onClick={() => load3plOrders()} className="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all shrink-0">Load</button>
+            <ThemedSelect value={admin3plVendorFilter} onChange={setAdmin3plVendorFilter} label="Vendor" options={[{ value: "all", label: "All Vendors" }, ...admin3plVendors.map(v => ({ value: v, label: v }))]} />
+            <button onClick={() => load3plOrders()} className="btn-primary py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
+              <Icon name="refresh" size={14} /> Load
+            </button>
           </div>
         </div>
       </div>
@@ -4059,12 +4059,7 @@ ${Array.from({ length: totalPages }, (_, pageIdx) => {
                                 {s.assigned3pl === "3pl_ecl" && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">ECL</span>}
                                 {s.assigned3pl === "3pl_ge" && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">GE</span>}
                                 {(!s.assigned3pl || s.assigned3pl === "") && <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-500/10 text-zinc-500">—</span>}
-                                <select value={s.assigned3pl || ""} onChange={(e) => assign3pl(s.vendor, s.uploadDate, e.target.value)} className="input-field px-1.5 py-1 rounded text-[10px] w-[70px]">
-                                  <option value="">Set</option>
-                                  <option value="3pl_ecl">ECL</option>
-                                  <option value="3pl_ge">GE</option>
-                                  <option value="pending">↩ Clear</option>
-                                </select>
+                                <ThemedSelect value={s.assigned3pl || ""} onChange={(v) => assign3pl(s.vendor, s.uploadDate, v)} options={[{ value: "", label: "Set" }, { value: "3pl_ecl", label: "ECL" }, { value: "3pl_ge", label: "GE" }, { value: "pending", label: "↩ Clear" }]} />
                               </div>
                             </td>
                             <td className="px-3 py-2.5">
